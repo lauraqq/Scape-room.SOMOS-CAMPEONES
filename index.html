@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏆 ESCAPE ROOM: SOMOS CAMPEONES</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --yellow: #FFD600;
+    --orange: #FF6B00;
+    --red: #FF2D55;
+    --green: #00C853;
+    --blue: #0066FF;
+    --purple: #9C27B0;
+    --cyan: #00BCD4;
+    --white: #FFFFFF;
+    --dark: #1A1A2E;
+    --card-bg: rgba(255,255,255,0.97);
+    --shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Animated background */
+  .bg-stars {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+    background: 
+      radial-gradient(ellipse at 20% 50%, #0a1172 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, #1a0050 0%, transparent 50%),
+      radial-gradient(ellipse at 60% 80%, #001a40 0%, transparent 50%),
+      #0d0d1a;
+    overflow: hidden;
+  }
+  .bg-stars::before {
+    content: '⚽🏀🎾🏈🏐🥎🏉🎱⚽🏀🎾🏈🏐🥎🏉🎱⚽🏀🎾🏈🏐🥎🏉🎱⚽🏀🎾🏈🏐';
+    position: absolute; top: 0; left: 0; width: 200%; height: 200%;
+    font-size: 40px; line-height: 80px; letter-spacing: 60px;
+    opacity: 0.04;
+    animation: bgScroll 60s linear infinite;
+    white-space: pre-wrap;
+  }
+  @keyframes bgScroll {
+    from { transform: translate(0,0); }
+    to { transform: translate(-50%,-50%); }
+  }
+
+  /* SCREEN SYSTEM */
+  .screen { display: none; position: relative; z-index: 1; min-height: 100vh; padding: 20px; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+  /* CARD */
+  .card {
+    background: var(--card-bg);
+    border-radius: 28px;
+    box-shadow: var(--shadow), 0 0 0 4px rgba(255,255,255,0.1);
+    padding: 36px 32px;
+    width: 100%; max-width: 720px;
+    position: relative;
+    overflow: hidden;
+    animation: cardIn 0.5s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes cardIn {
+    from { transform: scale(0.85) translateY(30px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  .card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 8px;
+    background: var(--stripe, linear-gradient(90deg,var(--yellow),var(--orange),var(--red),var(--purple),var(--blue),var(--cyan),var(--green)));
+  }
+
+  /* TITLE */
+  h1.main-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.2rem, 6vw, 3.8rem);
+    color: var(--yellow);
+    text-align: center;
+    text-shadow: 4px 4px 0 var(--orange), 6px 6px 0 rgba(0,0,0,0.3);
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  h2.room-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  h3.prueba-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.1rem, 3vw, 1.6rem);
+    color: var(--dark);
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    font-size: 1rem; font-weight: 700; color: #555;
+    text-align: center; margin-bottom: 6px;
+  }
+  .meta { font-size: 0.85rem; color: #888; text-align: center; margin-bottom: 20px; }
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    background: var(--yellow);
+    color: var(--dark);
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.9rem;
+    padding: 4px 14px; border-radius: 999px;
+    margin: 4px;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.15);
+  }
+  .badge.blue { background: var(--blue); color: white; }
+  .badge.green { background: var(--green); color: white; }
+  .badge.red { background: var(--red); color: white; }
+  .badge.purple { background: var(--purple); color: white; }
+
+  /* ROOM CARDS on map */
+  .rooms-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin: 20px 0;
+  }
+  .room-btn {
+    border: none; cursor: pointer;
+    border-radius: 20px;
+    padding: 20px 16px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.15rem;
+    color: white;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.25);
+    position: relative;
+  }
+  .room-btn:hover { transform: translateY(-4px); box-shadow: 0 10px 0 rgba(0,0,0,0.25); }
+  .room-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.25); }
+  .room-btn .room-icon { font-size: 2.2rem; }
+  .room-btn.sala1 { background: linear-gradient(135deg,#FF6B6B,#FF2D55); }
+  .room-btn.sala2 { background: linear-gradient(135deg,#4ECDC4,#0066FF); }
+  .room-btn.sala3 { background: linear-gradient(135deg,#FFD93D,#FF6B00); }
+  .room-btn.sala4 { background: linear-gradient(135deg,#C77DFF,#9C27B0); }
+  .room-btn .completed-badge {
+    position: absolute; top: -8px; right: -8px;
+    background: var(--green); color: white;
+    border-radius: 50%; width: 28px; height: 28px;
+    font-size: 1rem; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    display: none;
+  }
+  .room-btn.done .completed-badge { display: flex; }
+
+  /* DIGIT DISPLAY */
+  .digit-display {
+    display: flex; justify-content: center; gap: 12px; margin: 16px 0;
+  }
+  .digit-box {
+    width: 56px; height: 72px;
+    background: var(--dark); border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.4rem; color: var(--yellow);
+    box-shadow: inset 0 4px 8px rgba(0,0,0,0.4), 0 2px 0 rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.1);
+    transition: all 0.5s;
+  }
+  .digit-box.revealed { color: var(--green); text-shadow: 0 0 20px var(--green); animation: digitPop 0.6s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes digitPop { from{transform:scale(0);} to{transform:scale(1);} }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-block; border: none; cursor: pointer;
+    font-family: 'Fredoka One', cursive; font-size: 1.1rem;
+    padding: 14px 28px; border-radius: 999px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.25);
+    margin: 6px;
+  }
+  .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 0 rgba(0,0,0,0.25); }
+  .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.25); }
+  .btn-primary { background: linear-gradient(135deg,var(--yellow),var(--orange)); color: var(--dark); }
+  .btn-blue { background: linear-gradient(135deg,#4fc3f7,var(--blue)); color: white; }
+  .btn-green { background: linear-gradient(135deg,#69f0ae,var(--green)); color: var(--dark); }
+  .btn-red { background: linear-gradient(135deg,#ff6b6b,var(--red)); color: white; }
+  .btn-gray { background: #e0e0e0; color: #555; }
+  .btn-purple { background: linear-gradient(135deg,#ce93d8,var(--purple)); color: white; }
+
+  /* OPTIONS for MCQ */
+  .options-grid { display: grid; gap: 10px; margin: 16px 0; }
+  .option-btn {
+    width: 100%; border: 3px solid #e0e0e0; background: white;
+    cursor: pointer; border-radius: 16px; padding: 14px 18px;
+    font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 700;
+    text-align: left; color: var(--dark);
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .option-btn:hover { border-color: var(--blue); background: #e8f0ff; transform: translateX(4px); }
+  .option-btn .opt-letter {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--blue); color: white;
+    font-family: 'Fredoka One', cursive; font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .option-btn:nth-child(1) .opt-letter { background: var(--red); }
+  .option-btn:nth-child(2) .opt-letter { background: var(--green); }
+  .option-btn:nth-child(3) .opt-letter { background: var(--orange); }
+  .option-btn:nth-child(4) .opt-letter { background: var(--purple); }
+
+  /* TRUE/FALSE */
+  .vf-card {
+    background: #f8f9fa; border-radius: 16px; padding: 18px;
+    margin: 10px 0; border: 2px solid #e0e0e0;
+  }
+  .vf-statement { font-size: 0.95rem; font-weight: 700; color: var(--dark); margin-bottom: 12px; }
+  .vf-buttons { display: flex; gap: 10px; }
+  .vf-btn {
+    flex: 1; border: none; cursor: pointer; border-radius: 12px;
+    padding: 10px; font-family: 'Fredoka One', cursive; font-size: 1rem;
+    transition: all 0.2s; box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+  }
+  .vf-btn.verdadero { background: var(--green); color: white; }
+  .vf-btn.falso { background: var(--red); color: white; }
+  .vf-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(0,0,0,0.2); }
+  .vf-btn:active { transform: translateY(1px); }
+  .vf-btn.correct { outline: 4px solid var(--yellow); }
+  .vf-btn.wrong { opacity: 0.4; }
+  .vf-result { font-size: 0.82rem; font-weight: 700; margin-top: 8px; padding: 8px 12px; border-radius: 10px; display: none; }
+  .vf-result.show { display: block; }
+  .vf-result.ok { background: #e8f5e9; color: var(--green); }
+  .vf-result.fail { background: #ffebee; color: var(--red); }
+
+  /* SEQUENCE ordering */
+  .sequence-item {
+    background: white; border: 2px solid #e0e0e0; border-radius: 14px;
+    padding: 12px 16px; margin: 6px 0;
+    cursor: grab; display: flex; align-items: center; gap: 12px;
+    font-weight: 700; font-size: 0.95rem; color: var(--dark);
+    transition: all 0.2s; user-select: none;
+  }
+  .sequence-item:hover { border-color: var(--blue); background: #f0f4ff; }
+  .sequence-item.dragging { opacity: 0.4; cursor: grabbing; }
+  .seq-handle { font-size: 1.3rem; }
+  .seq-number {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--blue); color: white;
+    font-family: 'Fredoka One', cursive; font-size: 1rem;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+
+  /* MATCHING pairs */
+  .matching-area { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+  .match-col { display: flex; flex-direction: column; gap: 8px; }
+  .match-item {
+    background: white; border: 2px solid #e0e0e0; border-radius: 12px;
+    padding: 10px 14px; font-size: 0.85rem; font-weight: 700; color: var(--dark);
+    cursor: pointer; transition: all 0.2s; min-height: 50px;
+    display: flex; align-items: center;
+  }
+  .match-item:hover { border-color: var(--purple); background: #f3e5f5; }
+  .match-item.selected { border-color: var(--purple); background: #e1bee7; }
+  .match-item.matched { border-color: var(--green); background: #e8f5e9; cursor: default; }
+  .match-item.wrong-match { border-color: var(--red); background: #ffebee; animation: shake 0.3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+  /* CIPHER */
+  .cipher-display {
+    background: var(--dark); border-radius: 16px; padding: 20px;
+    font-family: 'Fredoka One', cursive; font-size: 1.6rem; color: var(--yellow);
+    text-align: center; letter-spacing: 4px; margin: 16px 0;
+    box-shadow: inset 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .cipher-table {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+    gap: 4px; margin: 12px 0;
+  }
+  .cipher-cell {
+    background: #f0f0f0; border-radius: 8px; padding: 4px;
+    text-align: center; font-size: 0.75rem; font-weight: 800;
+  }
+  .cipher-cell span { display: block; color: var(--blue); font-family: 'Fredoka One', cursive; }
+
+  /* TEXT INPUT */
+  .answer-input {
+    width: 100%; padding: 14px 18px; border-radius: 16px;
+    border: 3px solid #e0e0e0; font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem; font-weight: 700; text-align: center;
+    outline: none; transition: border 0.2s;
+    text-transform: uppercase;
+  }
+  .answer-input:focus { border-color: var(--blue); }
+
+  /* PROGRESS BAR */
+  .progress-wrap { margin: 16px 0; }
+  .progress-label { font-size: 0.85rem; font-weight: 700; color: #666; margin-bottom: 6px; }
+  .progress-bar { background: #e0e0e0; border-radius: 999px; height: 14px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,var(--green),var(--cyan)); transition: width 0.5s; }
+
+  /* HINT */
+  .hint-box {
+    background: #FFF8E1; border: 2px solid var(--yellow); border-radius: 14px;
+    padding: 12px 16px; margin-top: 12px; display: none;
+    font-size: 0.9rem; font-weight: 700; color: #795548;
+  }
+  .hint-box.show { display: block; animation: fadeIn 0.3s; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+
+  /* REVEAL DIGIT */
+  .digit-reveal {
+    text-align: center; padding: 20px 0;
+  }
+  .big-digit {
+    font-family: 'Fredoka One', cursive;
+    font-size: 8rem; color: var(--green);
+    text-shadow: 4px 4px 0 #009624, 0 0 40px rgba(0,200,83,0.5);
+    animation: digitReveal 1s cubic-bezier(.34,1.56,.64,1);
+    line-height: 1;
+  }
+  @keyframes digitReveal { from{transform:scale(0) rotate(-180deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
+
+  /* ERROR SCREEN */
+  .error-content { text-align: center; padding: 20px 0; }
+  .error-icon { font-size: 5rem; animation: wobble 0.5s; }
+  @keyframes wobble { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-10deg)} 75%{transform:rotate(10deg)} }
+  .error-text { font-family: 'Fredoka One', cursive; font-size: 1.8rem; color: var(--red); margin: 12px 0; }
+
+  /* VICTORY */
+  .victory-wrap { text-align: center; }
+  .trophy { font-size: 6rem; animation: trophyBounce 1s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes trophyBounce { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+  .code-final {
+    font-family: 'Fredoka One', cursive; font-size: 3rem;
+    color: var(--yellow); letter-spacing: 12px;
+    text-shadow: 3px 3px 0 var(--orange);
+    background: var(--dark); padding: 16px 32px; border-radius: 20px;
+    display: inline-block; margin: 16px 0;
+  }
+
+  /* CONFETTI */
+  .confetti-piece {
+    position: fixed; top: -20px; border-radius: 3px;
+    animation: confettiFall linear forwards;
+    z-index: 9999; pointer-events: none;
+  }
+  @keyframes confettiFall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* NAV BAR */
+  .top-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,26,0.9); backdrop-filter: blur(10px);
+    padding: 10px 20px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 2px solid rgba(255,255,255,0.08);
+  }
+  .top-bar-title { font-family: 'Fredoka One', cursive; color: var(--yellow); font-size: 1.1rem; }
+  .top-bar-digits { display: flex; gap: 6px; }
+  .mini-digit {
+    width: 32px; height: 38px; background: rgba(255,255,255,0.08); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fredoka One', cursive; font-size: 1.1rem; color: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.5s;
+  }
+  .mini-digit.lit { color: var(--yellow); background: rgba(255,214,0,0.15); border-color: var(--yellow); }
+
+  .pt { padding-top: 70px; }
+
+  /* STEPS indicator */
+  .steps { display: flex; justify-content: center; gap: 6px; margin-bottom: 16px; }
+  .step-dot {
+    width: 12px; height: 12px; border-radius: 50%; background: #ddd;
+    transition: all 0.3s;
+  }
+  .step-dot.done { background: var(--green); }
+  .step-dot.current { background: var(--blue); transform: scale(1.3); }
+
+  /* Scrollable area */
+  .scroll-area { max-height: calc(100vh - 180px); overflow-y: auto; padding-right: 4px; }
+  .scroll-area::-webkit-scrollbar { width: 6px; }
+  .scroll-area::-webkit-scrollbar-track { background: transparent; }
+  .scroll-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+
+  .section-header {
+    background: linear-gradient(135deg, #f5f5f5, #ececec);
+    border-radius: 14px; padding: 14px 18px; margin-bottom: 16px;
+    border-left: 6px solid var(--blue);
+  }
+  .section-header p { font-size: 0.88rem; color: #555; margin-top: 4px; font-style: italic; }
+
+  .check-icon { margin-right: 6px; }
+  .info-text { font-size: 0.9rem; color: #666; margin: 8px 0; }
+
+  .center { text-align: center; }
+  .mt { margin-top: 16px; }
+  .mb { margin-bottom: 16px; }
+
+  @media (max-width: 500px) {
+    .card { padding: 24px 16px; }
+    .rooms-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .matching-area { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-stars"></div>
+
+<!-- TOP NAV BAR -->
+<div class="top-bar" id="topBar" style="display:none">
+  <div class="top-bar-title">🏆 SOMOS CAMPEONES</div>
+  <div class="top-bar-digits">
+    <div class="mini-digit" id="md1">?</div>
+    <div class="mini-digit" id="md2">?</div>
+    <div class="mini-digit" id="md3">?</div>
+    <div class="mini-digit" id="md4">?</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN: INTRO -->
+<!-- ============================================================ -->
+<div class="screen active" id="s-intro">
+  <div class="card" style="text-align:center">
+    <div style="font-size:4rem;margin-bottom:10px">🏆⚽🏀🎾</div>
+    <h1 class="main-title">SOMOS CAMPEONES</h1>
+    <div class="subtitle">ESCAPE ROOM · EDUCACIÓN FÍSICA</div>
+    <div class="meta">4.º de Primaria · Grupo 13</div>
+    <div style="margin:16px 0; display:flex; flex-wrap:wrap; justify-content:center; gap:6px">
+      <span class="badge">🥗 Hábitos Saludables</span>
+      <span class="badge blue">♿ Deportes Adaptados</span>
+      <span class="badge" style="background:var(--orange);color:white">🤸 Habilidades Motrices</span>
+      <span class="badge purple">💃 Expresión Corporal</span>
+    </div>
+    <div style="background:#f8f9fa; border-radius:16px; padding:18px; margin:16px 0; text-align:left">
+      <div style="font-family:'Fredoka One',cursive; font-size:1.1rem; color:var(--dark); margin-bottom:8px">📋 ¿Cómo funciona?</div>
+      <div style="font-size:0.9rem; color:#555; line-height:1.6">
+        Superarás <strong>4 salas</strong> con pruebas variadas. Cada sala te dará <strong>un dígito del código secreto</strong>. Al final, deberás introducir el código de <strong>4 dígitos</strong> para ¡ganar la Jornada Solidaria!
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; justify-content:center; align-items:center; margin:10px 0">
+      <div class="digit-box">?</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:#ccc">—</div>
+      <div class="digit-box">?</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:#ccc">—</div>
+      <div class="digit-box">?</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:#ccc">—</div>
+      <div class="digit-box">?</div>
+    </div>
+    <button class="btn btn-primary" style="font-size:1.3rem; padding:18px 40px; margin-top:12px" onclick="goTo('s-map')">
+      🚀 ¡COMENZAR!
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN: MAP -->
+<!-- ============================================================ -->
+<div class="screen pt" id="s-map">
+  <div class="card">
+    <h2 class="room-title">🗺️ Mapa de Salas</h2>
+    <p class="info-text center">Haz clic en una sala para entrar. Completa las 4 para obtener el código secreto.</p>
+    <div class="digit-display">
+      <div class="digit-box" id="db1">?</div>
+      <div class="digit-box" id="db2">?</div>
+      <div class="digit-box" id="db3">?</div>
+      <div class="digit-box" id="db4">?</div>
+    </div>
+    <div class="rooms-grid">
+      <button class="room-btn sala1" id="rb1" onclick="startRoom(1)">
+        <div class="completed-badge">✓</div>
+        <span class="room-icon">🥗</span>
+        <span>SALA 1</span>
+        <small style="font-family:'Nunito',sans-serif;font-size:0.8rem;opacity:0.9">Hábitos Saludables</small>
+      </button>
+      <button class="room-btn sala2" id="rb2" onclick="startRoom(2)">
+        <div class="completed-badge">✓</div>
+        <span class="room-icon">♿</span>
+        <span>SALA 2</span>
+        <small style="font-family:'Nunito',sans-serif;font-size:0.8rem;opacity:0.9">Deportes Adaptados</small>
+      </button>
+      <button class="room-btn sala3" id="rb3" onclick="startRoom(3)">
+        <div class="completed-badge">✓</div>
+        <span class="room-icon">🤸</span>
+        <span>SALA 3</span>
+        <small style="font-family:'Nunito',sans-serif;font-size:0.8rem;opacity:0.9">Habilidades Motrices</small>
+      </button>
+      <button class="room-btn sala4" id="rb4" onclick="startRoom(4)">
+        <div class="completed-badge">✓</div>
+        <span class="room-icon">💃</span>
+        <span>SALA 4</span>
+        <small style="font-family:'Nunito',sans-serif;font-size:0.8rem;opacity:0.9">Expresión Corporal</small>
+      </button>
+    </div>
+    <div id="allDoneBtn" style="display:none; text-align:center; margin-top:12px">
+      <button class="btn btn-primary" style="font-size:1.2rem;padding:16px 36px" onclick="goTo('s-code')">
+        🔐 Introducir Código Secreto
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SALA 1: HÁBITOS SALUDABLES -->
+<!-- ============================================================ -->
+
+<!-- S1 PRUEBA 1: Completar frase -->
+<div class="screen pt" id="s1p1">
+  <div class="card">
+    <div class="steps" id="steps1"></div>
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">🥗 SALA 1 · Hábitos Saludables</h2>
+      <p>El nutricionista del colegio ha cerrado la puerta. ¡Demuestra que cuidas tu cuerpo!</p>
+    </div>
+    <h3 class="prueba-title">🧩 Prueba 1/4 — Completa la frase</h3>
+    <div style="background:#e8f5e9;border-radius:14px;padding:16px;font-size:1rem;font-weight:700;color:var(--dark);margin-bottom:16px;line-height:1.7">
+      Antes de hacer deporte siempre hay que <span style="background:var(--yellow);padding:2px 10px;border-radius:6px">________</span> para evitar lesiones, y después hay que <span style="background:var(--yellow);padding:2px 10px;border-radius:6px">________</span> para relajar los músculos.
+    </div>
+    <div class="options-grid">
+      <button class="option-btn" onclick="wrongAnswer('s1p1')"><span class="opt-letter">A</span> jugar y descansar</button>
+      <button class="option-btn" onclick="goTo('s1p2')"><span class="opt-letter">B</span> calentar y estirar</button>
+      <button class="option-btn" onclick="wrongAnswer('s1p1')"><span class="opt-letter">C</span> comer y beber</button>
+      <button class="option-btn" onclick="wrongAnswer('s1p1')"><span class="opt-letter">D</span> correr y saltar</button>
+    </div>
+    <button class="btn btn-gray" style="font-size:0.85rem;padding:8px 16px" onclick="toggleHint('hint1p1')">💡 Pista</button>
+    <div class="hint-box" id="hint1p1">Piensa en lo que hace el profe al principio y al final de cada clase de Educación Física.</div>
+  </div>
+</div>
+
+<!-- S1 PRUEBA 2: V/F Hábitos -->
+<div class="screen pt" id="s1p2">
+  <div class="card">
+    <div class="steps" id="steps1b"></div>
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">🥗 SALA 1 · Hábitos Saludables</h2>
+    </div>
+    <h3 class="prueba-title">✅❌ Prueba 2/4 — Verdadero o Falso</h3>
+    <p class="info-text">¿Cuánto sabes de hábitos saludables? ¡Ojo a las trampas!</p>
+    <div class="scroll-area" id="vf1-area">
+      <!-- Generated by JS -->
+    </div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-green" id="vf1-next" style="display:none" onclick="goTo('s1p3')">¡Siguiente prueba! →</button>
+    </div>
+  </div>
+</div>
+
+<!-- S1 PRUEBA 3: Ordenar secuencia -->
+<div class="screen pt" id="s1p3">
+  <div class="card">
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">🥗 SALA 1 · Hábitos Saludables</h2>
+    </div>
+    <h3 class="prueba-title">🔢 Prueba 3/4 — Ordena la secuencia</h3>
+    <p class="info-text">Ordena los pasos de una sesión de Educación Física. Pulsa los botones en el orden correcto (1→5):</p>
+    <div id="seq1-area"></div>
+    <div class="progress-wrap">
+      <div class="progress-label">Progreso: <span id="seq1-prog">0</span>/5</div>
+      <div class="progress-bar"><div class="progress-fill" id="seq1-bar" style="width:0%"></div></div>
+    </div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-green" id="seq1-next" style="display:none" onclick="goTo('s1p4')">¡Siguiente prueba! →</button>
+    </div>
+  </div>
+</div>
+
+<!-- S1 PRUEBA 4: Acertijo agua -->
+<div class="screen pt" id="s1p4">
+  <div class="card">
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">🥗 SALA 1 · Hábitos Saludables</h2>
+    </div>
+    <h3 class="prueba-title">🔍 Prueba 4/4 — Acertijo</h3>
+    <div style="background:#e3f2fd;border-radius:16px;padding:18px;margin:14px 0;font-size:0.95rem;font-weight:700;color:var(--dark);line-height:1.7;font-style:italic">
+      💭 Soy invisible pero sin mí el cuerpo se cansa antes, los músculos duelen más y la sangre se espesa. Los deportistas me llevan siempre en su botella. ¿Quién soy?
+    </div>
+    <div id="pistas1" style="margin:10px 0"></div>
+    <button class="btn btn-gray" style="font-size:0.85rem;padding:8px 16px;margin-bottom:12px" onclick="showPista('pistas1',pistas_s1)">💡 Pista progresiva</button>
+    <input type="text" class="answer-input" id="ans-s1p4" placeholder="Escribe tu respuesta..." maxlength="30">
+    <div style="text-align:center;margin-top:14px">
+      <button class="btn btn-blue" onclick="checkById('ans-s1p4','s1p4','s1-reveal')">🔍 Verificar</button>
+    </div>
+    <div class="hint-box" id="s1p4-error" style="background:#ffebee;border-color:var(--red)">❌ No es correcto. ¡Inténtalo de nuevo!</div>
+  </div>
+</div>
+
+<!-- S1 REVEAL digit -->
+<div class="screen pt" id="s1-reveal">
+  <div class="card" style="text-align:center">
+    <h2 class="room-title" style="color:var(--green)">🎉 ¡Sala 1 Superada!</h2>
+    <div class="digit-reveal">
+      <div class="big-digit">7</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:#555;margin-top:8px">Primer dígito del código</div>
+    </div>
+    <button class="btn btn-primary" style="font-size:1.1rem;margin-top:16px" onclick="completeRoom(1,'s-map')">🗺️ Ir a Sala 2</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SALA 2: DEPORTES ADAPTADOS -->
+<!-- ============================================================ -->
+
+<!-- S2 PRUEBA 1: Relacionar pares -->
+<div class="screen pt" id="s2p1">
+  <div class="card">
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">♿ SALA 2 · Deportes Adaptados</h2>
+      <p>El monitor inclusivo ha dejado un mensaje misterioso. ¡Demuestra que conoces los deportes adaptados!</p>
+    </div>
+    <h3 class="prueba-title">🔗 Prueba 1/4 — Une los pares</h3>
+    <p class="info-text">Toca un deporte de la izquierda y luego su característica de la derecha.</p>
+    <div class="matching-area" id="match2-area">
+      <div class="match-col" id="match2-left"></div>
+      <div class="match-col" id="match2-right"></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label">Pares encontrados: <span id="match2-prog">0</span>/6</div>
+      <div class="progress-bar"><div class="progress-fill" id="match2-bar" style="width:0%"></div></div>
+    </div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-green" id="match2-next" style="display:none" onclick="goTo('s2p2')">¡Siguiente prueba! →</button>
+    </div>
+  </div>
+</div>
+
+<!-- S2 PRUEBA 2: Descifrar ROT13 -->
+<div class="screen pt" id="s2p2">
+  <div class="card">
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">♿ SALA 2 · Deportes Adaptados</h2>
+    </div>
+    <h3 class="prueba-title">🔐 Prueba 2/4 — Descifra el mensaje ROT13</h3>
+    <p class="info-text">Cada letra se sustituye por la que está 13 posiciones después en el alfabeto.</p>
+    <div class="cipher-display">RY QRCBEGR NQNCGNQB CEBZBRIR YN VAPHFVBA</div>
+    <details style="margin:12px 0">
+      <summary style="cursor:pointer;font-weight:700;color:var(--blue);padding:8px">🔑 Ver tabla de conversión ROT13</summary>
+      <div class="cipher-table" style="margin-top:10px">
+        <div class="cipher-cell">A<span>N</span></div><div class="cipher-cell">B<span>O</span></div><div class="cipher-cell">C<span>P</span></div><div class="cipher-cell">D<span>Q</span></div><div class="cipher-cell">E<span>R</span></div><div class="cipher-cell">F<span>S</span></div><div class="cipher-cell">G<span>T</span></div><div class="cipher-cell">H<span>U</span></div><div class="cipher-cell">I<span>V</span></div><div class="cipher-cell">J<span>W</span></div><div class="cipher-cell">K<span>X</span></div><div class="cipher-cell">L<span>Y</span></div><div class="cipher-cell">M<span>Z</span></div>
+        <div class="cipher-cell">N<span>A</span></div><div class="cipher-cell">O<span>B</span></div><div class="cipher-cell">P<span>C</span></div><div class="cipher-cell">Q<span>D</span></div><div class="cipher-cell">R<span>E</span></div><div class="cipher-cell">S<span>F</span></div><div class="cipher-cell">T<span>G</span></div><div class="cipher-cell">U<span>H</span></div><div class="cipher-cell">V<span>I</span></div><div class="cipher-cell">W<span>J</span></div><div class="cipher-cell">X<span>K</span></div><div class="cipher-cell">Y<span>L</span></div><div class="cipher-cell">Z<span>M</span></div>
+      </div>
+    </details>
+    <input type="text" class="answer-input" id="ans-s2p2" placeholder="Escribe el mensaje descifrado..." maxlength="60">
+    <div style="text-align:center;margin-top:14px">
+      <button class="btn btn-blue" onclick="checkById('ans-s2p2','s2p2','s2p3')">🔍 Verificar</button>
+    </div>
+    <div class="hint-box" id="s2p2-error" style="background:#ffebee;border-color:var(--red)">❌ No es correcto. ¡Inténtalo de nuevo!</div>
+  </div>
+</div>
+
+<!-- S2 PRUEBA 3: Completar frase goalball -->
+<div class="screen pt" id="s2p3">
+  <div class="card">
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">♿ SALA 2 · Deportes Adaptados</h2>
+    </div>
+    <h3 class="prueba-title">🧩 Prueba 3/4 — Completa la frase</h3>
+    <div style="background:#e8f5e9;border-radius:14px;padding:16px;font-size:1rem;font-weight:700;color:var(--dark);margin-bottom:16px;line-height:1.7">
+      En el goalball, el silencio es fundamental porque los jugadores siguen la pelota mediante el <span style="background:var(--yellow);padding:2px 10px;border-radius:6px">________</span> que produce al rodar.
+    </div>
+    <div class="options-grid">
+      <button class="option-btn" onclick="wrongAnswer('s2p3')"><span class="opt-letter">A</span> color vivo que tiene</button>
+      <button class="option-btn" onclick="goTo('s2p4')"><span class="opt-letter">B</span> sonido de los cascabeles</button>
+      <button class="option-btn" onclick="wrongAnswer('s2p3')"><span class="opt-letter">C</span> tamaño grande que tiene</button>
+      <button class="option-btn" onclick="wrongAnswer('s2p3')"><span class="opt-letter">D</span> olor especial que desprende</button>
+    </div>
+    <button class="btn btn-gray" style="font-size:0.85rem;padding:8px 16px" onclick="toggleHint('hint2p3')">💡 Pista</button>
+    <div class="hint-box" id="hint2p3">¿Qué sentido utilizamos cuando no podemos ver? Piensa en qué lleva dentro la pelota de goalball.</div>
+  </div>
+</div>
+
+<!-- S2 PRUEBA 4: Acertijo Boccia -->
+<div class="screen pt" id="s2p4">
+  <div class="card">
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">♿ SALA 2 · Deportes Adaptados</h2>
+    </div>
+    <h3 class="prueba-title">🔍 Prueba 4/4 — Acertijo</h3>
+    <div style="background:#e3f2fd;border-radius:16px;padding:18px;margin:14px 0;font-size:0.95rem;font-weight:700;color:var(--dark);line-height:1.7;font-style:italic">
+      💭 Soy un deporte paralímpico. Me parezco a las petancas pero se me practica desde una silla. Mi objetivo es lanzar bolas de cuero lo más cerca posible de una bola blanca. ¿Cómo me llamo?
+    </div>
+    <div id="pistas2" style="margin:10px 0"></div>
+    <button class="btn btn-gray" style="font-size:0.85rem;padding:8px 16px;margin-bottom:12px" onclick="showPista('pistas2',pistas_s2)">💡 Pista progresiva</button>
+    <input type="text" class="answer-input" id="ans-s2p4" placeholder="Escribe tu respuesta..." maxlength="20">
+    <div style="text-align:center;margin-top:14px">
+      <button class="btn btn-blue" onclick="checkById('ans-s2p4','s2p4','s2-reveal')">🔍 Verificar</button>
+    </div>
+    <div class="hint-box" id="s2p4-error" style="background:#ffebee;border-color:var(--red)">❌ No es correcto. ¡Inténtalo de nuevo!</div>
+  </div>
+</div>
+
+<!-- S2 REVEAL -->
+<div class="screen pt" id="s2-reveal">
+  <div class="card" style="text-align:center">
+    <h2 class="room-title" style="color:var(--blue)">🎉 ¡Sala 2 Superada!</h2>
+    <div class="digit-reveal">
+      <div class="big-digit" style="color:var(--blue);text-shadow:4px 4px 0 #0033aa,0 0 40px rgba(0,102,255,0.5)">4</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:#555;margin-top:8px">Segundo dígito del código</div>
+    </div>
+    <button class="btn btn-blue" style="font-size:1.1rem;margin-top:16px" onclick="completeRoom(2,'s-map')">🗺️ Ir a Sala 3</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SALA 3: HABILIDADES MOTRICES -->
+<!-- ============================================================ -->
+
+<!-- S3 PRUEBA 1: Ordenar fases salto -->
+<div class="screen pt" id="s3p1">
+  <div class="card">
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">🤸 SALA 3 · Habilidades Motrices</h2>
+      <p>El preparador físico ha bloqueado la sala. ¡Demuestra que dominas las habilidades motrices!</p>
+    </div>
+    <h3 class="prueba-title">🔢 Prueba 1/4 — Ordena la secuencia</h3>
+    <p class="info-text">Ordena las fases del salto de longitud. Pulsa los pasos en el orden correcto:</p>
+    <div id="seq3-area"></div>
+    <div class="progress-wrap">
+      <div class="progress-label">Progreso: <span id="seq3-prog">0</span>/5</div>
+      <div class="progress-bar"><div class="progress-fill" id="seq3-bar" style="width:0%"></div></div>
+    </div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-green" id="seq3-next" style="display:none" onclick="goTo('s3p2')">¡Siguiente prueba! →</button>
+    </div>
+  </div>
+</div>
+
+<!-- S3 PRUEBA 2: V/F Motrices -->
+<div class="screen pt" id="s3p2">
+  <div class="card">
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">🤸 SALA 3 · Habilidades Motrices</h2>
+    </div>
+    <h3 class="prueba-title">✅❌ Prueba 2/4 — ¿Mito o Realidad?</h3>
+    <p class="info-text">Verdadero o Falso sobre habilidades motrices. ¡Ojo a las trampas!</p>
+    <div class="scroll-area" id="vf3-area"></div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-green" id="vf3-next" style="display:none" onclick="goTo('s3p3')">¡Siguiente prueba! →</button>
+    </div>
+  </div>
+</div>
+
+<!-- S3 PRUEBA 3: Relacionar pares motrices -->
+<div class="screen pt" id="s3p3">
+  <div class="card">
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">🤸 SALA 3 · Habilidades Motrices</h2>
+    </div>
+    <h3 class="prueba-title">🔗 Prueba 3/4 — Une los pares</h3>
+    <p class="info-text">Une cada habilidad motriz con el ejercicio que mejor la trabaja.</p>
+    <div class="matching-area" id="match3-area">
+      <div class="match-col" id="match3-left"></div>
+      <div class="match-col" id="match3-right"></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label">Pares encontrados: <span id="match3-prog">0</span>/6</div>
+      <div class="progress-bar"><div class="progress-fill" id="match3-bar" style="width:0%"></div></div>
+    </div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-green" id="match3-next" style="display:none" onclick="goTo('s3p4')">¡Siguiente prueba! →</button>
+    </div>
+  </div>
+</div>
+
+<!-- S3 PRUEBA 4: Descifrar números -->
+<div class="screen pt" id="s3p4">
+  <div class="card">
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">🤸 SALA 3 · Habilidades Motrices</h2>
+    </div>
+    <h3 class="prueba-title">🔐 Prueba 4/4 — Descifra los números</h3>
+    <p class="info-text">Cada número corresponde a la posición de esa letra en el alfabeto (A=1, B=2…)</p>
+    <div class="cipher-display">9 · 13 · 16 · 21 · 12 · 19 · 15</div>
+    <details style="margin:12px 0">
+      <summary style="cursor:pointer;font-weight:700;color:var(--blue);padding:8px">🔑 Ver tabla de letras</summary>
+      <div class="cipher-table" style="margin-top:10px">
+        <div class="cipher-cell">A<span>1</span></div><div class="cipher-cell">B<span>2</span></div><div class="cipher-cell">C<span>3</span></div><div class="cipher-cell">D<span>4</span></div><div class="cipher-cell">E<span>5</span></div><div class="cipher-cell">F<span>6</span></div><div class="cipher-cell">G<span>7</span></div><div class="cipher-cell">H<span>8</span></div><div class="cipher-cell">I<span>9</span></div><div class="cipher-cell">J<span>10</span></div><div class="cipher-cell">K<span>11</span></div><div class="cipher-cell">L<span>12</span></div><div class="cipher-cell">M<span>13</span></div>
+        <div class="cipher-cell">N<span>14</span></div><div class="cipher-cell">O<span>15</span></div><div class="cipher-cell">P<span>16</span></div><div class="cipher-cell">Q<span>17</span></div><div class="cipher-cell">R<span>18</span></div><div class="cipher-cell">S<span>19</span></div><div class="cipher-cell">T<span>20</span></div><div class="cipher-cell">U<span>21</span></div><div class="cipher-cell">V<span>22</span></div><div class="cipher-cell">W<span>23</span></div><div class="cipher-cell">X<span>24</span></div><div class="cipher-cell">Y<span>25</span></div><div class="cipher-cell">Z<span>26</span></div>
+      </div>
+    </details>
+    <input type="text" class="answer-input" id="ans-s3p4" placeholder="Escribe la palabra..." maxlength="20">
+    <div style="text-align:center;margin-top:14px">
+      <button class="btn btn-blue" onclick="checkById('ans-s3p4','s3p4','s3-reveal')">🔍 Verificar</button>
+    </div>
+    <div class="hint-box" id="s3p4-error" style="background:#ffebee;border-color:var(--red)">❌ No es correcto. ¡Inténtalo de nuevo!</div>
+  </div>
+</div>
+
+<!-- S3 REVEAL -->
+<div class="screen pt" id="s3-reveal">
+  <div class="card" style="text-align:center">
+    <h2 class="room-title" style="color:var(--orange)">🎉 ¡Sala 3 Superada!</h2>
+    <div class="digit-reveal">
+      <div class="big-digit" style="color:var(--orange);text-shadow:4px 4px 0 #c04000,0 0 40px rgba(255,107,0,0.5)">2</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:#555;margin-top:8px">Tercer dígito del código</div>
+    </div>
+    <button class="btn btn-primary" style="font-size:1.1rem;margin-top:16px" onclick="completeRoom(3,'s-map')">🗺️ Ir a Sala 4</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SALA 4: EXPRESIÓN CORPORAL -->
+<!-- ============================================================ -->
+
+<!-- S4 PRUEBA 1: Acertijo expresión corporal -->
+<div class="screen pt" id="s4p1">
+  <div class="card">
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">💃 SALA 4 · Expresión Corporal</h2>
+      <p>La maestra de danza ha escondido el último dígito. ¡Solo los artistas del movimiento podrán superarla!</p>
+    </div>
+    <h3 class="prueba-title">🔍 Prueba 1/4 — Acertijo</h3>
+    <div style="background:#f3e5f5;border-radius:16px;padding:18px;margin:14px 0;font-size:0.95rem;font-weight:700;color:var(--dark);line-height:1.7;font-style:italic">
+      💭 Soy una forma de comunicación que no usa palabras. Me expreso con el gesto, la postura y el movimiento. Los actores me usan en el teatro. Los bailarines me dominan. Mi nombre tiene dos palabras: una de ellas es 'corporal'. ¿Qué soy?
+    </div>
+    <div id="pistas4" style="margin:10px 0"></div>
+    <button class="btn btn-gray" style="font-size:0.85rem;padding:8px 16px;margin-bottom:12px" onclick="showPista('pistas4',pistas_s4)">💡 Pista progresiva</button>
+    <input type="text" class="answer-input" id="ans-s4p1" placeholder="Escribe tu respuesta..." maxlength="40">
+    <div style="text-align:center;margin-top:14px">
+      <button class="btn btn-blue" onclick="checkById('ans-s4p1','s4p1','s4p2')">🔍 Verificar</button>
+    </div>
+    <div class="hint-box" id="s4p1-error" style="background:#ffebee;border-color:var(--red)">❌ No es correcto. ¡Inténtalo de nuevo!</div>
+  </div>
+</div>
+
+<!-- S4 PRUEBA 2: Completar teatro de sombras -->
+<div class="screen pt" id="s4p2">
+  <div class="card">
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">💃 SALA 4 · Expresión Corporal</h2>
+    </div>
+    <h3 class="prueba-title">🧩 Prueba 2/4 — Completa la frase</h3>
+    <div style="background:#f3e5f5;border-radius:14px;padding:16px;font-size:1rem;font-weight:700;color:var(--dark);margin-bottom:16px;line-height:1.7">
+      En el teatro de sombras necesitamos colocar un foco de luz <span style="background:var(--yellow);padding:2px 10px;border-radius:6px">________</span> de los actores para que su silueta se proyecte sobre la pantalla.
+    </div>
+    <div class="options-grid">
+      <button class="option-btn" onclick="wrongAnswer('s4p2')"><span class="opt-letter">A</span> delante</button>
+      <button class="option-btn" onclick="goTo('s4p3')"><span class="opt-letter">B</span> detrás</button>
+      <button class="option-btn" onclick="wrongAnswer('s4p2')"><span class="opt-letter">C</span> encima</button>
+      <button class="option-btn" onclick="wrongAnswer('s4p2')"><span class="opt-letter">D</span> debajo</button>
+    </div>
+    <button class="btn btn-gray" style="font-size:0.85rem;padding:8px 16px" onclick="toggleHint('hint4p2')">💡 Pista</button>
+    <div class="hint-box" id="hint4p2">Piensa en cómo funciona la sombra de tu cuerpo cuando el sol está detrás de ti.</div>
+  </div>
+</div>
+
+<!-- S4 PRUEBA 3: V/F lenguaje del cuerpo -->
+<div class="screen pt" id="s4p3">
+  <div class="card">
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">💃 SALA 4 · Expresión Corporal</h2>
+    </div>
+    <h3 class="prueba-title">✅❌ Prueba 3/4 — ¿Conoces el lenguaje del cuerpo?</h3>
+    <p class="info-text">Verdadero o Falso. ¡Ojo a las trampas!</p>
+    <div class="scroll-area" id="vf4-area"></div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-green" id="vf4-next" style="display:none" onclick="goTo('s4p4')">¡Siguiente prueba! →</button>
+    </div>
+  </div>
+</div>
+
+<!-- S4 PRUEBA 4: Descifrar alfabeto inverso -->
+<div class="screen pt" id="s4p4">
+  <div class="card">
+    <div class="section-header">
+      <h2 class="room-title" style="font-size:1.4rem;margin-bottom:4px">💃 SALA 4 · Expresión Corporal</h2>
+    </div>
+    <h3 class="prueba-title">🔐 Prueba 4/4 — Descifra el mensaje</h3>
+    <p class="info-text">Alfabeto al revés: A=Z, B=Y, C=X… Z=A. ¡Descifra este mensaje!</p>
+    <div class="cipher-display">VIVH TVMRZO</div>
+    <details style="margin:12px 0">
+      <summary style="cursor:pointer;font-weight:700;color:var(--purple);padding:8px">🔑 Ver tabla de conversión</summary>
+      <div class="cipher-table" style="margin-top:10px">
+        <div class="cipher-cell">A<span>Z</span></div><div class="cipher-cell">B<span>Y</span></div><div class="cipher-cell">C<span>X</span></div><div class="cipher-cell">D<span>W</span></div><div class="cipher-cell">E<span>V</span></div><div class="cipher-cell">F<span>U</span></div><div class="cipher-cell">G<span>T</span></div><div class="cipher-cell">H<span>S</span></div><div class="cipher-cell">I<span>R</span></div><div class="cipher-cell">J<span>Q</span></div><div class="cipher-cell">K<span>P</span></div><div class="cipher-cell">L<span>O</span></div><div class="cipher-cell">M<span>N</span></div>
+        <div class="cipher-cell">N<span>M</span></div><div class="cipher-cell">O<span>L</span></div><div class="cipher-cell">P<span>K</span></div><div class="cipher-cell">Q<span>J</span></div><div class="cipher-cell">R<span>I</span></div><div class="cipher-cell">S<span>H</span></div><div class="cipher-cell">T<span>G</span></div><div class="cipher-cell">U<span>F</span></div><div class="cipher-cell">V<span>E</span></div><div class="cipher-cell">W<span>D</span></div><div class="cipher-cell">X<span>C</span></div><div class="cipher-cell">Y<span>B</span></div><div class="cipher-cell">Z<span>A</span></div>
+      </div>
+    </details>
+    <input type="text" class="answer-input" id="ans-s4p4" placeholder="Escribe el mensaje descifrado..." maxlength="30">
+    <div style="text-align:center;margin-top:14px">
+      <button class="btn btn-blue" onclick="checkById('ans-s4p4','s4p4','s4-reveal')">🔍 Verificar</button>
+    </div>
+    <div class="hint-box" id="s4p4-error" style="background:#ffebee;border-color:var(--red)">❌ No es correcto. ¡Inténtalo de nuevo!</div>
+  </div>
+</div>
+
+<!-- S4 REVEAL -->
+<div class="screen pt" id="s4-reveal">
+  <div class="card" style="text-align:center">
+    <h2 class="room-title" style="color:var(--purple)">🎉 ¡Sala 4 Superada!</h2>
+    <div class="digit-reveal">
+      <div class="big-digit" style="color:var(--purple);text-shadow:4px 4px 0 #6a1b9a,0 0 40px rgba(156,39,176,0.5)">8</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:#555;margin-top:8px">Último dígito del código</div>
+    </div>
+    <button class="btn btn-purple" style="font-size:1.1rem;margin-top:16px" onclick="completeRoom(4,'s-map')">🗺️ Ir al código secreto</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CÓDIGO SECRETO -->
+<!-- ============================================================ -->
+<div class="screen pt" id="s-code">
+  <div class="card" style="text-align:center">
+    <h2 class="room-title">🔐 Código Secreto Final</h2>
+    <p class="info-text">¡Has conseguido los 4 dígitos! Introduce el código para abrir el patio y ganar la Jornada Solidaria.</p>
+    <div style="display:flex;gap:10px;justify-content:center;align-items:center;margin:20px 0;flex-wrap:wrap">
+      <div style="text-align:center">
+        <div style="font-size:0.75rem;font-weight:700;color:#888;margin-bottom:4px">SALA 1</div>
+        <div class="digit-box revealed" style="width:64px;height:80px;font-size:2.8rem">7</div>
+      </div>
+      <div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#ccc;align-self:center">—</div>
+      <div style="text-align:center">
+        <div style="font-size:0.75rem;font-weight:700;color:#888;margin-bottom:4px">SALA 2</div>
+        <div class="digit-box revealed" style="width:64px;height:80px;font-size:2.8rem">4</div>
+      </div>
+      <div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#ccc;align-self:center">—</div>
+      <div style="text-align:center">
+        <div style="font-size:0.75rem;font-weight:700;color:#888;margin-bottom:4px">SALA 3</div>
+        <div class="digit-box revealed" style="width:64px;height:80px;font-size:2.8rem">2</div>
+      </div>
+      <div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#ccc;align-self:center">—</div>
+      <div style="text-align:center">
+        <div style="font-size:0.75rem;font-weight:700;color:#888;margin-bottom:4px">SALA 4</div>
+        <div class="digit-box revealed" style="width:64px;height:80px;font-size:2.8rem">8</div>
+      </div>
+    </div>
+    <div style="margin:16px 0">
+      <input type="text" class="answer-input" id="final-code" placeholder="Introduce el código de 4 dígitos" maxlength="10" style="font-size:1.4rem;letter-spacing:6px">
+    </div>
+    <button class="btn btn-primary" style="font-size:1.2rem;padding:16px 40px" onclick="checkFinalCode()">🔓 ¡ABRIR!</button>
+    <div class="hint-box" id="code-error" style="background:#ffebee;border-color:var(--red)">❌ Código incorrecto. ¡Revisa los dígitos!</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- VICTORY -->
+<!-- ============================================================ -->
+<div class="screen pt" id="s-victory">
+  <div class="card" style="text-align:center">
+    <div class="victory-wrap">
+      <div class="trophy">🏆</div>
+      <h1 class="main-title" style="font-size:clamp(2rem,5vw,3rem);margin:12px 0">¡SOMOS CAMPEONES!</h1>
+      <p class="info-text" style="font-size:1rem">¡Lo habéis conseguido! El patio de la Jornada Solidaria está abierto.</p>
+      <div class="code-final">7 — 4 — 2 — 8</div>
+      <p class="info-text" style="font-size:0.9rem;margin-top:8px">Código introducido correctamente ✅</p>
+      <div style="display:flex;justify-content:center;gap:16px;font-size:3rem;margin:20px 0;flex-wrap:wrap">
+        <span title="Hábitos Saludables">🥗</span>
+        <span title="Deportes Adaptados">♿</span>
+        <span title="Habilidades Motrices">🤸</span>
+        <span title="Expresión Corporal">💃</span>
+      </div>
+      <div style="background:#f8f9fa;border-radius:16px;padding:14px;margin:16px 0;font-size:0.85rem;color:#666">
+        <strong>4.º de Primaria · Grupo 13 · Educación Física</strong><br>
+        Situación de Aprendizaje: Somos Campeones
+      </div>
+      <button class="btn btn-gray" onclick="goTo('s-intro');resetGame()" style="margin-top:8px">🔄 Jugar de nuevo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  roomsDone: [false, false, false, false],
+  digits: ['?','?','?','?']
+};
+
+// ============================================================
+// DATA
+// ============================================================
+const pistas_s1 = ['No soy un alimento sólido.','Cubro más del 70% del cuerpo humano.','Soy transparente e incolora.'];
+const pistas_s2 = ['Mi nombre empieza por B.','Tengo dos sílabas.','Se practica en los Juegos Paralímpicos desde 1984.'];
+const pistas_s4 = ['No soy el lenguaje escrito ni el oral.','Usas tu cuerpo entero para practicarme.','Mi nombre tiene dos palabras: una de ellas es corporal.'];
+
+// V/F Sala 1
+const vf1Data = [
+  { text: 'Beber agua solo cuando tenemos mucha sed es suficiente para hidratarse durante el deporte.', answer: false, trap: 'Hay que beber agua antes, durante y después del ejercicio aunque no se tenga sed.' },
+  { text: 'Dormir entre 9 y 11 horas ayuda a los niños a recuperarse del ejercicio físico.', answer: true, trap: 'Correcto: el sueño es fundamental para la recuperación muscular.' },
+  { text: 'Hacer deporte todos los días sin descansar es lo mejor para estar en forma.', answer: false, trap: 'El cuerpo necesita días de descanso para recuperarse y no lesionarse.' },
+  { text: 'Comer frutas y verduras nos aporta vitaminas y energía para hacer deporte.', answer: true, trap: 'Correcto: son la base de una alimentación saludable para deportistas.' },
+  { text: 'Un niño activo necesita exactamente los mismos nutrientes que un adulto sedentario.', answer: false, trap: 'Los niños deportistas tienen necesidades nutricionales específicas según su edad y actividad.' },
+];
+
+// V/F Sala 3
+const vf3Data = [
+  { text: 'El equilibrio solo se trabaja en el suelo, nunca en altura.', answer: false, trap: 'El equilibrio se puede trabajar en distintos planos: suelo, colchoneta elevada, banco sueco, etc.' },
+  { text: 'Lanzar con precisión es una habilidad motriz que se puede mejorar con práctica.', answer: true, trap: 'Todas las habilidades motrices mejoran con la práctica deliberada y el entrenamiento.' },
+  { text: 'Correr en zigzag y correr en línea recta implican las mismas habilidades motrices.', answer: false, trap: 'El zigzag exige cambios de dirección y coordinación que no requiere la carrera recta.' },
+  { text: 'Un niño que salta bien de longitud automáticamente salta bien de altura.', answer: false, trap: 'Son gestos técnicos distintos: el de longitud es horizontal y el de altura requiere batida vertical.' },
+  { text: 'La lateralidad (ser diestro o zurdo) afecta a cómo ejecutamos los lanzamientos.', answer: true, trap: 'La lateralidad dominante influye en la coordinación y la técnica de lanzamiento.' },
+];
+
+// V/F Sala 4
+const vf4Data = [
+  { text: 'La mímica permite comunicar ideas y emociones sin usar ninguna palabra.', answer: true, trap: 'Correcto: la mímica es comunicación no verbal total basada en gesto y movimiento.' },
+  { text: 'El ritmo en expresión corporal es lo mismo que la velocidad al correr.', answer: false, trap: 'El ritmo es la organización del movimiento en el tiempo, no tiene que ver con la velocidad atlética.' },
+  { text: 'En las cadenas de movimiento cooperativas, cada alumno inventa su gesto de forma individual sin coordinarse.', answer: false, trap: 'Es cooperativa: cada alumno añade un gesto al del anterior, creando una secuencia compartida.' },
+  { text: 'La postura corporal puede transmitir emociones como alegría, tristeza o confianza.', answer: true, trap: 'La postura es uno de los elementos clave de la comunicación no verbal y la expresión de emociones.' },
+  { text: 'Solo los bailarines profesionales pueden trabajar la expresión corporal.', answer: false, trap: 'La expresión corporal es una capacidad humana universal que todos podemos desarrollar.' },
+];
+
+// Sequences
+const seq1Data = [
+  'Preparación del material',
+  'Calentamiento progresivo (10 min)',
+  'Actividad principal (40 min)',
+  'Vuelta a la calma y estiramientos (10 min)',
+  'Reflexión final y asamblea',
+];
+const seq3Data = [
+  'Preparación de la postura',
+  'Carrera de aproximación',
+  'Impulso con los pies',
+  'Vuelo en el aire',
+  'Caída y amortiguación',
+];
+
+// Matching Sala 2
+const match2Data = [
+  { left: 'Goalball', right: 'Pelota con cascabeles para jugadores con discapacidad visual' },
+  { left: 'Boccia', right: 'Lanzar bolas acercándose a la bola blanca desde silla de ruedas' },
+  { left: 'Sitting Volleyball', right: 'Voleibol jugado sentado en el suelo' },
+  { left: 'Atletismo paralímpico', right: 'Carreras con prótesis o en silla de ruedas' },
+  { left: 'Esgrima en silla', right: 'Combate con florete desde silla de ruedas fija' },
+  { left: 'Natación paralímpica', right: 'Competición en piscina con categorías según discapacidad' },
+];
+
+// Matching Sala 3
+const match3Data = [
+  { left: 'Equilibrio estático', right: 'Mantenerse en un pie con ojos cerrados 15 segundos' },
+  { left: 'Coordinación óculo-manual', right: 'Lanzar una pelota a una diana y atraparla' },
+  { left: 'Velocidad de reacción', right: 'Juego del pilla-pilla con salida a la señal' },
+  { left: 'Resistencia aeróbica', right: 'Carrera continua durante 10 minutos sin parar' },
+  { left: 'Fuerza en piernas', right: 'Saltar obstáculos con los pies juntos en circuito' },
+  { left: 'Flexibilidad', right: 'Estiramientos estáticos de isquiotibiales al suelo' },
+];
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if (id !== 's-intro') document.getElementById('topBar').style.display = 'flex';
+}
+
+function startRoom(n) {
+  const maps = {1:'s1p1', 2:'s2p1', 3:'s3p1', 4:'s4p1'};
+  goTo(maps[n]);
+}
+
+function wrongAnswer(currentScreen) {
+  const card = document.querySelector('#' + currentScreen + ' .card');
+  card.style.animation = 'none';
+  card.style.borderTop = '8px solid var(--red)';
+  setTimeout(() => {
+    card.style.borderTop = '';
+    card.style.animation = 'cardIn 0.5s';
+  }, 600);
+  // flash red
+  card.style.background = '#ffebee';
+  setTimeout(() => card.style.background = '', 500);
+}
+
+// ============================================================
+// ROOM COMPLETION
+// ============================================================
+function completeRoom(n, nextScreen) {
+  state.roomsDone[n-1] = true;
+  const digits = [7,4,2,8];
+  state.digits[n-1] = digits[n-1];
+  updateUI();
+  goTo(nextScreen);
+  checkAllDone();
+}
+
+function updateUI() {
+  const dbIds = ['db1','db2','db3','db4'];
+  const mdIds = ['md1','md2','md3','md4'];
+  const digits = [7,4,2,8];
+  state.roomsDone.forEach((done, i) => {
+    if (done) {
+      const db = document.getElementById(dbIds[i]);
+      db.textContent = digits[i];
+      db.classList.add('revealed');
+      document.getElementById(mdIds[i]).textContent = digits[i];
+      document.getElementById(mdIds[i]).classList.add('lit');
+      document.getElementById('rb'+(i+1)).classList.add('done');
+    }
+  });
+}
+
+function checkAllDone() {
+  if (state.roomsDone.every(Boolean)) {
+    document.getElementById('allDoneBtn').style.display = 'block';
+  }
+}
+
+function checkFinalCode() {
+  const val = document.getElementById('final-code').value.replace(/[\s\-\.]/g,'');
+  if (val === '7428') {
+    launchConfetti();
+    setTimeout(() => goTo('s-victory'), 800);
+  } else {
+    const err = document.getElementById('code-error');
+    err.classList.add('show');
+    setTimeout(() => err.classList.remove('show'), 2500);
+  }
+}
+
+function resetGame() {
+  state.roomsDone = [false,false,false,false];
+  state.digits = ['?','?','?','?'];
+  ['db1','db2','db3','db4'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.textContent = '?'; el.classList.remove('revealed');
+  });
+  ['md1','md2','md3','md4'].forEach(id => {
+    const el = document.getElementById(id);
+    el.textContent = '?'; el.classList.remove('lit');
+  });
+  ['rb1','rb2','rb3','rb4'].forEach(id => document.getElementById(id).classList.remove('done'));
+  document.getElementById('allDoneBtn').style.display = 'none';
+  document.getElementById('topBar').style.display = 'none';
+  // reset pistas
+  ['pistas1','pistas2','pistas4'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=''; el && (el._count=0); });
+}
+
+// ============================================================
+// ANSWER CHECKING — answers stored only here, never in HTML
+// ============================================================
+const ANSWERS = {
+  's1p4': ['AGUA','EL AGUA'],
+  's2p2': ['EL DEPORTE ADAPTADO PROMUEVE LA INCLUSION','EL DEPORTE ADAPTADO PROMUEVE LA INCLUSIÓN'],
+  's2p4': ['BOCCIA'],
+  's3p4': ['IMPULSO'],
+  's4p1': ['EXPRESION CORPORAL','EXPRESIÓN CORPORAL','EXPRESION'],
+  's4p4': ['ERES GENIAL'],
+};
+
+function normalize(str) {
+  return str.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+
+function checkById(inputId, questionId, successScreen) {
+  const val = normalize(document.getElementById(inputId).value);
+  const correct = (ANSWERS[questionId] || []).map(normalize);
+  const errEl = document.getElementById(questionId + '-error');
+  if (correct.includes(val)) {
+    goTo(successScreen);
+  } else {
+    if (errEl) { errEl.classList.add('show'); setTimeout(() => errEl.classList.remove('show'), 2500); }
+  }
+}
+
+// ============================================================
+// HINTS
+// ============================================================
+function toggleHint(id) {
+  document.getElementById(id).classList.toggle('show');
+}
+
+function showPista(containerId, pistas) {
+  const el = document.getElementById(containerId);
+  if (!el._count) el._count = 0;
+  if (el._count < pistas.length) {
+    const div = document.createElement('div');
+    div.className = 'hint-box show';
+    div.style.marginBottom = '6px';
+    div.innerHTML = `💡 Pista ${el._count+1}: ${pistas[el._count]}`;
+    el.appendChild(div);
+    el._count++;
+  }
+}
+
+// ============================================================
+// TRUE/FALSE — answers never serialised into HTML
+// ============================================================
+const VF_DATASETS = {};  // populated at init: { containerId: data[] }
+
+function buildVF(containerId, data, nextBtnId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  VF_DATASETS[containerId] = data;   // store in JS only
+  container.innerHTML = '';
+
+  data.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'vf-card';
+    div.innerHTML = `
+      <div class="vf-statement">${i+1}. ${item.text}</div>
+      <div class="vf-buttons">
+        <button class="vf-btn verdadero" onclick="answerVF(${i},true,this,'${containerId}','${nextBtnId}')">✅ VERDADERO</button>
+        <button class="vf-btn falso" onclick="answerVF(${i},false,this,'${containerId}','${nextBtnId}')">❌ FALSO</button>
+      </div>
+      <div class="vf-result" id="vfr-${containerId}-${i}"></div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function answerVF(idx, answer, btn, containerId, nextBtnId) {
+  const data = VF_DATASETS[containerId];
+  const correct = data[idx].answer;
+  const resultEl = document.getElementById(`vfr-${containerId}-${idx}`);
+  const buttons = btn.parentElement.querySelectorAll('.vf-btn');
+  buttons.forEach(b => b.disabled = true);
+
+  if (answer === correct) {
+    btn.classList.add('correct');
+    buttons[answer?0:1].classList.add('wrong');
+    resultEl.className = 'vf-result show ok';
+    resultEl.innerHTML = '✅ ' + data[idx].trap;
+  } else {
+    btn.classList.add('wrong');
+    resultEl.className = 'vf-result show fail';
+    resultEl.innerHTML = '❌ ' + data[idx].trap;
+    // allow retry after 1.5s
+    setTimeout(() => {
+      buttons.forEach(b => b.disabled = false);
+      buttons.forEach(b => b.classList.remove('correct','wrong'));
+      resultEl.className = 'vf-result';
+    }, 1800);
+    return;
+  }
+
+  // check if all done
+  const allCards = document.getElementById(containerId).querySelectorAll('.vf-btn.correct, .vf-btn.verdadero[disabled]');
+  // simpler: count answered correctly
+  const vfCards = document.getElementById(containerId).querySelectorAll('.vf-card');
+  let doneCount = 0;
+  vfCards.forEach(card => {
+    if (card.querySelector('.vf-result.ok.show')) doneCount++;
+  });
+  if (doneCount === data.length) {
+    document.getElementById(nextBtnId).style.display = 'inline-block';
+  }
+}
+
+// ============================================================
+// SEQUENCE
+// ============================================================
+function buildSequence(areaId, progId, barId, nextBtnId, correctOrder) {
+  const area = document.getElementById(areaId);
+  if (!area) return;
+  const shuffled = [...correctOrder].sort(() => Math.random()-0.5);
+  let nextExpected = 0;
+
+  area.innerHTML = '';
+  shuffled.forEach((step, i) => {
+    const div = document.createElement('button');
+    div.className = 'sequence-item';
+    div.style.width = '100%';
+    div.style.border = '2px solid #e0e0e0';
+    div.style.background = 'white';
+    div.style.cursor = 'pointer';
+    div.style.textAlign = 'left';
+    div.innerHTML = `<span class="seq-handle">☰</span><div style="flex:1;font-size:0.9rem">${step}</div>`;
+    div.dataset.step = step;
+    div.onclick = function() {
+      const correctIdx = correctOrder.indexOf(step);
+      if (correctIdx === nextExpected) {
+        div.style.background = '#e8f5e9';
+        div.style.borderColor = 'var(--green)';
+        div.innerHTML = `<span style="color:var(--green);font-size:1.2rem">✅</span><div style="flex:1;font-size:0.9rem">${nextExpected+1}. ${step}</div>`;
+        div.onclick = null;
+        div.style.cursor = 'default';
+        nextExpected++;
+        const pct = Math.round(nextExpected/correctOrder.length*100);
+        document.getElementById(progId).textContent = nextExpected;
+        document.getElementById(barId).style.width = pct+'%';
+        if (nextExpected === correctOrder.length) {
+          document.getElementById(nextBtnId).style.display = 'inline-block';
+        }
+      } else {
+        div.style.animation = 'none';
+        div.style.borderColor = 'var(--red)';
+        div.style.background = '#ffebee';
+        setTimeout(() => { div.style.borderColor = '#e0e0e0'; div.style.background = 'white'; }, 600);
+      }
+    };
+    area.appendChild(div);
+  });
+}
+
+// ============================================================
+// MATCHING
+// ============================================================
+function buildMatching(leftId, rightId, progId, barId, nextBtnId, data) {
+  const leftCol = document.getElementById(leftId);
+  const rightCol = document.getElementById(rightId);
+  if (!leftCol || !rightCol) return;
+
+  let selected = null;
+  let matchedCount = 0;
+  const shuffledRight = [...data].sort(() => Math.random()-0.5);
+
+  leftCol.innerHTML = ''; rightCol.innerHTML = '';
+
+  data.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'match-item';
+    div.dataset.key = item.left;
+    div.dataset.side = 'left';
+    div.textContent = item.left;
+    div.onclick = () => handleMatch(div, 'left', data, matchCb);
+    leftCol.appendChild(div);
+  });
+
+  shuffledRight.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'match-item';
+    div.dataset.key = item.left;
+    div.dataset.side = 'right';
+    div.textContent = item.right;
+    div.onclick = () => handleMatch(div, 'right', data, matchCb);
+    rightCol.appendChild(div);
+  });
+
+  function matchCb() {
+    matchedCount++;
+    const pct = Math.round(matchedCount/data.length*100);
+    document.getElementById(progId).textContent = matchedCount;
+    document.getElementById(barId).style.width = pct+'%';
+    if (matchedCount === data.length) document.getElementById(nextBtnId).style.display = 'inline-block';
+  }
+}
+
+let _matchSelected = null;
+function handleMatch(div, side, data, cb) {
+  if (div.classList.contains('matched')) return;
+  if (!_matchSelected) {
+    if (_matchSelected) _matchSelected.classList.remove('selected');
+    _matchSelected = div;
+    div.classList.add('selected');
+  } else {
+    // check if they match
+    if (_matchSelected === div) { div.classList.remove('selected'); _matchSelected = null; return; }
+    const key1 = _matchSelected.dataset.key;
+    const key2 = div.dataset.key;
+    if (key1 === key2 && _matchSelected.dataset.side !== div.dataset.side) {
+      _matchSelected.classList.remove('selected');
+      _matchSelected.classList.add('matched');
+      div.classList.add('matched');
+      _matchSelected.onclick = null; div.onclick = null;
+      _matchSelected = null;
+      cb();
+    } else {
+      _matchSelected.classList.remove('selected');
+      _matchSelected.classList.add('wrong-match');
+      div.classList.add('wrong-match');
+      const prev = _matchSelected; const cur = div;
+      setTimeout(() => { prev.classList.remove('wrong-match'); cur.classList.remove('wrong-match'); }, 600);
+      _matchSelected = null;
+    }
+  }
+}
+
+// ============================================================
+// CONFETTI
+// ============================================================
+function launchConfetti() {
+  const colors = ['#FFD600','#FF6B00','#FF2D55','#00C853','#0066FF','#9C27B0','#00BCD4'];
+  for (let i = 0; i < 80; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.left = Math.random()*100 + 'vw';
+      el.style.width = (Math.random()*10+6) + 'px';
+      el.style.height = (Math.random()*10+6) + 'px';
+      el.style.background = colors[Math.floor(Math.random()*colors.length)];
+      el.style.animationDuration = (Math.random()*2+2) + 's';
+      el.style.animationDelay = (Math.random()*1) + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }, i*30);
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // Build V/F sections
+  buildVF('vf1-area', vf1Data, 'vf1-next');
+  buildVF('vf3-area', vf3Data, 'vf3-next');
+  buildVF('vf4-area', vf4Data, 'vf4-next');
+
+  // Build sequences
+  buildSequence('seq1-area','seq1-prog','seq1-bar','seq1-next', seq1Data);
+  buildSequence('seq3-area','seq3-prog','seq3-bar','seq3-next', seq3Data);
+
+  // Build matching
+  buildMatching('match2-left','match2-right','match2-prog','match2-bar','match2-next', match2Data);
+  buildMatching('match3-left','match3-right','match3-prog','match3-bar','match3-next', match3Data);
+});
+</script>
+</body>
+</html>
